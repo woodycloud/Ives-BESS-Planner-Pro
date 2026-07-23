@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+  body {
+    @apply bg-[#e6eae4] text-slate-900 dark:bg-[#121715] dark:text-slate-100 antialiased transition-colors duration-200;
+  }
+}
+
+.glass-panel {
+  @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/80 dark:border-slate-800/80 shadow-xs rounded-3xl;
+}
+
+.glass-pill {
+  @apply bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-md rounded-full border border-white/50 dark:border-slate-700/50;
+}

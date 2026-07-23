@@ -1,0 +1,8 @@
+{
+  "name": "IVES BESS-Planner Pro",
+  "description": "Professional PWA tool for BESS container assembly line modeling, Takt Time bottleneck analysis, Lego equipment layout simulation, and GWh capacity planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

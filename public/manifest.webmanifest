@@ -1,0 +1,21 @@
+{
+  "name": "储能集装箱产线产能规划系统",
+  "short_name": "BESS Capacity Planner",
+  "description": "基于 PWA 的 BESS 储能集装箱产线建模、Takt Time 瓶颈分析、What-if 场景模拟与 GWh 产能规划",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

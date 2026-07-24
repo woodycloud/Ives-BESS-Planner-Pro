@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -14,7 +14,12 @@ import {
   Container,
   Check,
   Sliders,
-  DollarSign
+  DollarSign,
+  Sparkles,
+  Filter,
+  Search,
+  Zap,
+  Copy
 } from 'lucide-react';
 import { 
   ProductionLineModel, 
@@ -45,6 +50,8 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
   const tGeneral = translations[lang];
   const [editingStation, setEditingStation] = useState<StationParameter | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const categoryNames: Record<string, string> = lang === 'en' ? {
     PREP: 'Pre-assembly',
@@ -65,6 +72,65 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
     TEST: '绝缘充放电测试',
     PACKAGING: '包装发运'
   };
+
+  // Find bottleneck station id based on effective cycle time
+  const bottleneckStationId = useMemo(() => {
+    let maxTime = 0;
+    let maxId = '';
+    model.stations.forEach(st => {
+      const lanes = st.parallelLanes || 1;
+      const stdMin = (st.standardTimeSec || 60) / 60;
+      const oee = ((st.availabilityRate || 100) / 100) * ((st.performanceRate || 100) / 100) * ((st.qualityRate || 100) / 100);
+      const effectiveTimeMin = (stdMin / lanes) / Math.max(0.1, oee);
+      if (effectiveTimeMin > maxTime) {
+        maxTime = effectiveTimeMin;
+        maxId = st.id;
+      }
+    });
+    return maxId;
+  }, [model.stations]);
+
+  // Handle 1-Click Auto-Balance Bottleneck Line
+  const handleAutoBalance = () => {
+    if (!bottleneckStationId) return;
+    const updatedStations = model.stations.map(st => {
+      if (st.id === bottleneckStationId) {
+        const currentLanes = st.parallelLanes || 1;
+        return { ...st, parallelLanes: currentLanes + 1 };
+      }
+      return st;
+    });
+    onUpdateModel({ ...model, stations: updatedStations });
+  };
+
+  // Handle Duplicate Station
+  const handleDuplicateStation = (stToCopy: StationParameter) => {
+    const nextCode = `ST-${(model.stations.length + 1).toString().padStart(2, '0')}`;
+    const duplicated: StationParameter = {
+      ...stToCopy,
+      id: `st-${Date.now()}`,
+      code: nextCode,
+      name: `${stToCopy.name} (${lang === 'en' ? 'Copy' : '副本'})`
+    };
+    onUpdateModel({ ...model, stations: [...model.stations, duplicated] });
+  };
+
+  // Filtered station list
+  const filteredStations = useMemo(() => {
+    return model.stations.filter(st => {
+      if (selectedCategory === 'BOTTLENECK' && st.id !== bottleneckStationId) {
+        return false;
+      }
+      if (selectedCategory !== 'ALL' && selectedCategory !== 'BOTTLENECK' && st.category !== selectedCategory) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return st.name.toLowerCase().includes(q) || st.code.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [model.stations, selectedCategory, searchQuery, bottleneckStationId]);
 
   // Handle station parameter changes
   const handleStationChange = (id: string, field: keyof StationParameter, value: any) => {
@@ -184,10 +250,87 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
 
       </div>
 
-      {/* STATIONS TABLE */}
+      {/* STATIONS TABLE WITH FILTERS */}
       <div className="space-y-4">
+        <div className="apple-card p-4 space-y-3">
+          
+          {/* Category Filter Pills & Search Bar & Auto-Balance */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            
+            {/* Category Pills */}
+            <div className="flex items-center space-x-1 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+              <button
+                onClick={() => setSelectedCategory('ALL')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 active:scale-95 ${
+                  selectedCategory === 'ALL'
+                    ? 'bg-[#007AFF] text-white shadow-xs'
+                    : 'bg-black/[0.04] dark:bg-white/[0.08] text-slate-600 dark:text-slate-400 hover:bg-black/[0.08]'
+                }`}
+              >
+                {lang === 'en' ? 'All' : '全部'} ({model.stations.length})
+              </button>
+
+              <button
+                onClick={() => setSelectedCategory('BOTTLENECK')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 active:scale-95 flex items-center space-x-1 ${
+                  selectedCategory === 'BOTTLENECK'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                }`}
+              >
+                <span>🔥 {lang === 'en' ? 'Bottleneck' : '仅看瓶颈'}</span>
+              </button>
+
+              {Object.entries(categoryNames).map(([catKey, catLabel]) => {
+                const count = model.stations.filter(s => s.category === catKey).length;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={catKey}
+                    onClick={() => setSelectedCategory(catKey)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 active:scale-95 ${
+                      selectedCategory === catKey
+                        ? 'bg-[#007AFF] text-white shadow-xs'
+                        : 'bg-black/[0.04] dark:bg-white/[0.08] text-slate-600 dark:text-slate-400 hover:bg-black/[0.08]'
+                    }`}
+                  >
+                    {catLabel} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right Controls: Search & Auto-Balance */}
+            <div className="flex items-center space-x-2 shrink-0">
+              <div className="relative flex items-center">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={lang === 'en' ? 'Search station...' : '搜索工站名称/代号...'}
+                  className="bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.1] rounded-full pl-8 pr-3 py-1 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#007AFF] w-40 sm:w-48 font-medium"
+                />
+              </div>
+
+              {bottleneckStationId && (
+                <button
+                  onClick={handleAutoBalance}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-xs transition-all active:scale-95 shrink-0"
+                  title={lang === 'en' ? 'Automatically add 1 parallel lane to bottleneck station to boost throughput' : '针对产线瓶颈工站一键自动加开1条并行通道提升节拍与产能'}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>{lang === 'en' ? 'Auto-Balance' : '瓶颈一键扩容'}</span>
+                </button>
+              )}
+            </div>
+
+          </div>
+
+        </div>
+
         <div className="apple-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between">
+          <div className="px-6 py-3 border-b border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-900 dark:text-white">
               {lang === 'en' ? 'Process Flow & Parameters (Live Editable)' : '工序流程顺序表与工艺参数（支持全字段在线修改）'}
             </span>
@@ -213,8 +356,10 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {model.stations.map((st, index) => (
-                    <tr key={st.id} className="hover:bg-black/[0.01] dark:hover:bg-white/[0.02] transition group">
+                  {filteredStations.map((st, index) => {
+                    const isBottleneck = st.id === bottleneckStationId;
+                    return (
+                    <tr key={st.id} className={`transition group ${isBottleneck ? 'bg-amber-500/[0.05] dark:bg-amber-500/[0.08]' : 'hover:bg-black/[0.01] dark:hover:bg-white/[0.02]'}`}>
                       
                       {/* Order Controls */}
                       <td className="py-3 px-2 text-center">
@@ -240,15 +385,24 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
                       {/* Station Code & Name */}
                       <td className="py-3 px-3">
                         <div className="flex items-center space-x-2">
-                          <span className="font-mono text-xs font-semibold text-[#007AFF] bg-[#007AFF]/10 px-2 py-0.5 rounded-md border border-[#007AFF]/20">
+                          <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                            isBottleneck 
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold'
+                              : 'text-[#007AFF] bg-[#007AFF]/10 border-[#007AFF]/20'
+                          }`}>
                             {st.code}
                           </span>
                           <input
                             type="text"
                             value={st.name}
                             onChange={(e) => handleStationChange(st.id, 'name', e.target.value)}
-                            className="bg-transparent font-semibold text-slate-900 dark:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06] px-1.5 py-0.5 rounded-lg border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-[#007AFF] w-44 truncate"
+                            className="bg-transparent font-semibold text-slate-900 dark:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06] px-1.5 py-0.5 rounded-lg border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-[#007AFF] w-40 truncate"
                           />
+                          {isBottleneck && (
+                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0">
+                              🔥 {lang === 'en' ? 'Bottleneck' : '瓶颈工站'}
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -364,16 +518,23 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
                       <td className="py-3 px-3 text-right">
                         <div className="flex items-center justify-end space-x-1">
                           <button
+                            onClick={() => handleDuplicateStation(st)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition"
+                            title={lang === 'en' ? 'Duplicate station' : '复制复制该工站'}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => setEditingStation(st)}
                             className="p-1.5 text-slate-400 hover:text-[#007AFF] hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition"
-                            title="详细参数编辑"
+                            title={lang === 'en' ? 'Advanced station parameters' : '详细参数编辑'}
                           >
                             <Sliders className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteStation(st.id)}
                             className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition"
-                            title="删除工站"
+                            title={lang === 'en' ? 'Delete station' : '删除工站'}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -381,7 +542,8 @@ export const LineModelingView: React.FC<LineModelingViewProps> = ({
                       </td>
 
                     </tr>
-                  ))}
+                  );
+                })}
                 </tbody>
               </table>
             </div>

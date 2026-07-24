@@ -9,7 +9,12 @@ import {
   Globe, 
   Calculator,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Command,
+  Download,
+  Upload,
+  DownloadCloud,
+  ShieldCheck
 } from 'lucide-react';
 import { ProductionLineModel } from '../types/bess';
 import { Language, translations } from '../utils/i18n';
@@ -27,6 +32,8 @@ interface NavbarProps {
   onImportJson: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isPwaInstalled: boolean;
   onInstallPwa: () => void;
+  onOpenCommandPalette: () => void;
+  onOpenGuideModal?: () => void;
   activeTab: 'overview' | 'gwhCalc' | 'modeling' | 'whatif' | 'compare';
   setActiveTab: (tab: 'overview' | 'gwhCalc' | 'modeling' | 'whatif' | 'compare') => void;
   theme: 'dark' | 'light';
@@ -46,9 +53,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenReport,
   isWhatIfActive,
   lang,
-  onToggleLang
+  onToggleLang,
+  onExportJson,
+  onImportJson,
+  isPwaInstalled,
+  onInstallPwa,
+  onOpenCommandPalette,
+  onOpenGuideModal
 }) => {
   const t = translations[lang];
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <>
@@ -152,6 +166,66 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Action Tools */}
             <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               
+              {/* Process Guide Standard Modal Button */}
+              {onOpenGuideModal && (
+                <button
+                  onClick={onOpenGuideModal}
+                  title={lang === 'en' ? 'BESS Manufacturing Process & EOL Quality Standard' : '查看 5MWh与6.25MWh 对标、1-2-1 电芯分选与-80kPa气密性工艺规范'}
+                  className="hidden md:flex items-center space-x-1 px-2.5 h-8 rounded-full bg-[#007AFF]/10 hover:bg-[#007AFF]/20 text-[#007AFF] border border-[#007AFF]/20 text-[11px] font-semibold transition-colors shrink-0 active:scale-95"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{lang === 'en' ? 'BESS Specs' : '工艺规范'}</span>
+                </button>
+              )}
+
+              {/* Command Palette Button */}
+              <button
+                onClick={onOpenCommandPalette}
+                title={lang === 'en' ? 'Open Command Palette (Cmd+K)' : '打开快捷指令菜单 (Cmd+K)'}
+                className="hidden sm:flex items-center space-x-1 px-2.5 h-8 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.07] dark:hover:bg-white/[0.12] border border-black/[0.02] dark:border-white/[0.05] text-[11px] font-medium text-slate-600 dark:text-slate-300 transition-colors shrink-0 active:scale-95"
+              >
+                <Command className="w-3 h-3 text-[#007AFF]" />
+                <span className="hidden md:inline font-mono text-[10px] bg-black/[0.06] dark:bg-white/[0.1] px-1 rounded">⌘K</span>
+              </button>
+
+              {/* Export JSON Project */}
+              <button
+                onClick={onExportJson}
+                title={t.exportJsonTitle}
+                className="hidden lg:flex items-center space-x-1 px-2.5 h-8 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.07] dark:hover:bg-white/[0.12] border border-black/[0.02] dark:border-white/[0.05] text-[11px] font-medium text-slate-600 dark:text-slate-300 transition-colors shrink-0 active:scale-95"
+              >
+                <Download className="w-3 h-3 text-[#007AFF]" />
+                <span>JSON</span>
+              </button>
+
+              {/* Import JSON Project */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={onImportJson}
+                accept=".json"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                title={t.importJsonTitle}
+                className="hidden lg:flex items-center space-x-1 px-2.5 h-8 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.07] dark:hover:bg-white/[0.12] border border-black/[0.02] dark:border-white/[0.05] text-[11px] font-medium text-slate-600 dark:text-slate-300 transition-colors shrink-0 active:scale-95"
+              >
+                <Upload className="w-3 h-3 text-emerald-500" />
+              </button>
+
+              {/* Install PWA Button if available */}
+              {!isPwaInstalled && (
+                <button
+                  onClick={onInstallPwa}
+                  title={t.installPwaTitle}
+                  className="hidden xl:flex items-center space-x-1 px-2.5 h-8 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold transition-colors shrink-0 active:scale-95"
+                >
+                  <DownloadCloud className="w-3 h-3" />
+                  <span>{t.installPwa}</span>
+                </button>
+              )}
+
               {/* Preset Selector Dropdown */}
               <div className="relative flex items-center bg-black/[0.04] dark:bg-white/[0.08] px-2 sm:px-2.5 h-8 rounded-full border border-black/[0.02] dark:border-white/[0.05] shrink-0 hover:bg-black/[0.07] dark:hover:bg-white/[0.12] transition-colors">
                 <span className="text-[10px] font-medium text-slate-400 dark:text-slate-400 mr-1 hidden xs:inline">

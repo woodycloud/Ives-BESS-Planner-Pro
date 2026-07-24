@@ -8,6 +8,8 @@ import { GwhCapacityCalculator } from './components/GwhCapacityCalculator';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
 import { MultiVersionCompare } from './components/MultiVersionCompare';
 import { SimulationReportModal } from './components/SimulationReportModal';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { BessProcessGuideModal } from './components/BessProcessGuideModal';
 
 import { ProductionLineModel, PlanVersionSnapshot, CapacityCalculationResult } from './types/bess';
 import { calculateLineCapacity } from './utils/capacityCalculator';
@@ -53,10 +55,24 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'gwhCalc' | 'modeling' | 'whatif' | 'compare'>('overview');
   const [isWhatIfActive, setIsWhatIfActive] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
   // PWA Install prompt state
   const [pwaDeferredPrompt, setPwaDeferredPrompt] = useState<any>(null);
   const [isPwaInstalled, setIsPwaInstalled] = useState(false);
+
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Initialize IndexedDB storage and load versions
   useEffect(() => {
@@ -261,6 +277,8 @@ export default function App() {
         onImportJson={handleImportJson}
         isPwaInstalled={isPwaInstalled}
         onInstallPwa={handleInstallPwa}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onOpenGuideModal={() => setIsGuideModalOpen(true)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         theme={theme}
@@ -348,6 +366,28 @@ export default function App() {
 
       </main>
 
+      {/* Command Palette Modal (Cmd + K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        models={models}
+        activeModel={activeModel}
+        onSelectModel={(id) => setActiveModelId(id)}
+        onSaveModel={handleSaveModel}
+        onOpenReport={() => setIsReportOpen(true)}
+        onExportJson={handleExportJson}
+        onImportJsonClick={() => {
+          const input = document.querySelector('input[type="file"][accept=".json"]') as HTMLInputElement;
+          input?.click();
+        }}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        lang={lang}
+        onToggleLang={toggleLang}
+      />
+
       {/* Dynamic Print / PDF Report Modal */}
       <SimulationReportModal
         isOpen={isReportOpen}
@@ -355,6 +395,13 @@ export default function App() {
         model={activeModel}
         result={baselineResult}
         onExportCsv={handleExportCsv}
+        lang={lang}
+      />
+
+      {/* BESS Process & Quality Control Standard Modal */}
+      <BessProcessGuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
         lang={lang}
       />
 

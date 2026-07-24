@@ -8,9 +8,9 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
   const { shiftConfig, containerSpec, targetAnnualGWh, stations } = model;
   
   // 1. Calculate Daily & Annual Net Operating Minutes
-  const netShiftMinutes = Math.max(10, (shiftConfig.hoursPerShift * 60) - shiftConfig.plannedDowntimeMinPerShift);
-  const availableMinutesPerDay = netShiftMinutes * shiftConfig.shiftsPerDay;
-  const availableMinutesPerYear = availableMinutesPerDay * shiftConfig.operatingDaysPerYear;
+  const netShiftMinutes = Math.max(1, (shiftConfig.hoursPerShift * 60) - shiftConfig.plannedDowntimeMinPerShift);
+  const availableMinutesPerDay = netShiftMinutes * Math.max(1, shiftConfig.shiftsPerDay);
+  const availableMinutesPerYear = availableMinutesPerDay * Math.max(1, shiftConfig.operatingDaysPerYear);
 
   // 2. Compute Individual Station Effective Cycle Times
   let maxCycleTimeMin = 0;
@@ -25,22 +25,23 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
   const stationMetricsMap: Map<string, CalculatedStationMetrics> = new Map();
 
   stations.forEach((st) => {
-    // Parallel channels factor
+    // Parallel channels & equipment units factor
     const parallelLanes = Math.max(1, st.parallelLanes || 1);
     const machinesCount = Math.max(1, st.machinesCount || 1);
+    const effectiveParallel = Math.max(parallelLanes, machinesCount);
     
     // Standard time per lane in minutes
-    const stdTimeMin = (st.standardTimeSec || 60) / 60;
-    const baseTimeMin = stdTimeMin / parallelLanes;
+    const stdTimeMin = Math.max(0, (st.standardTimeSec || 0) / 60);
+    const baseTimeMin = stdTimeMin / effectiveParallel;
 
     // OEE breakdown
-    const avail = (st.availabilityRate || 100) / 100;
-    const perf = (st.performanceRate || 100) / 100;
-    const qual = (st.qualityRate || 100) / 100;
+    const avail = Math.max(0.01, (st.availabilityRate ?? 100) / 100);
+    const perf = Math.max(0.01, (st.performanceRate ?? 100) / 100);
+    const qual = Math.max(0.01, (st.qualityRate ?? 100) / 100);
     const oeeFrac = Math.max(0.01, avail * perf * qual);
     
     // Rework impact
-    const reworkMin = ((st.reworkRate || 0) / 100) * ((st.avgReworkTimeSec || 0) / 60);
+    const reworkMin = (Math.max(0, st.reworkRate || 0) / 100) * (Math.max(0, st.avgReworkTimeSec || 0) / 60);
 
     // Effective Cycle Time in minutes
     const effectiveCycleTimeMin = (baseTimeMin / oeeFrac) + reworkMin;
@@ -50,9 +51,9 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
       bottleneckStationId = st.id;
     }
 
-    const stationOperatorsTotal = st.operatorsCount * parallelLanes * shiftConfig.shiftsPerDay;
-    const stationEquipmentCost = (st.equipmentCostTenThousand || 0) * parallelLanes;
-    const stationFootprint = (st.footprintSqM || 0) * parallelLanes;
+    const stationOperatorsTotal = st.operatorsCount * effectiveParallel * Math.max(1, shiftConfig.shiftsPerDay);
+    const stationEquipmentCost = (st.equipmentCostTenThousand || 0) * effectiveParallel;
+    const stationFootprint = (st.footprintSqM || 0) * effectiveParallel;
 
     totalCycleTimeMin += effectiveCycleTimeMin;
     totalOperators += stationOperatorsTotal;
@@ -95,23 +96,24 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
   const bottleneckSt = stations.find(s => s.id === bottleneckStationId);
 
   // 4. Calculate Customer Demand Takt Time
-  const targetAnnualUnits = (targetAnnualGWh * 1000) / Math.max(0.1, containerSpec.energyCapacityMWh);
+  const containerCapacityMWh = Math.max(0.1, containerSpec.energyCapacityMWh || 5.016);
+  const targetAnnualUnits = (Math.max(0, targetAnnualGWh || 0) * 1000) / containerCapacityMWh;
   const targetDailyUnits = targetAnnualUnits / Math.max(1, shiftConfig.operatingDaysPerYear);
-  const demandTaktTimeMin = Math.round((availableMinutesPerDay / Math.max(0.001, targetDailyUnits)) * 100) / 100;
+  const demandTaktTimeMin = targetDailyUnits > 0 ? Math.round((availableMinutesPerDay / targetDailyUnits) * 100) / 100 : 0;
 
   // 5. Output Capacity Calculations
   const dailyUnitsOutput = Math.round((availableMinutesPerDay / lineTaktTimeMin) * 100) / 100;
-  const dailyMWhOutput = Math.round((dailyUnitsOutput * containerSpec.energyCapacityMWh) * 10) / 10;
+  const dailyMWhOutput = Math.round((dailyUnitsOutput * containerCapacityMWh) * 10) / 10;
   
   const annualUnitsOutput = Math.round(dailyUnitsOutput * shiftConfig.operatingDaysPerYear);
-  const annualGWhOutput = Math.round(((annualUnitsOutput * containerSpec.energyCapacityMWh) / 1000) * 1000) / 1000;
+  const annualGWhOutput = Math.round(((annualUnitsOutput * containerCapacityMWh) / 1000) * 1000) / 1000;
 
-  const capacityTargetMetPercent = Math.round((annualGWhOutput / Math.max(0.001, targetAnnualGWh)) * 1000) / 10;
+  const capacityTargetMetPercent = (targetAnnualGWh || 0) > 0 ? Math.round((annualGWhOutput / targetAnnualGWh) * 1000) / 10 : 100;
 
   // 6. Line Balance Ratio
   const numStations = Math.max(1, stations.length);
   const lineBalanceRatioPercent = Math.round((totalCycleTimeMin / (numStations * lineTaktTimeMin)) * 1000) / 10;
-  const balanceLossPercent = Math.round((100 - lineBalanceRatioPercent) * 10) / 10;
+  const balanceLossPercent = Math.max(0, Math.round((100 - lineBalanceRatioPercent) * 10) / 10);
   const averageOEEPercent = Math.round((sumOEE / numStations) * 10) / 10;
   const lineFPYPercent = Math.round(lineFPYProduct * 1000) / 10;
 

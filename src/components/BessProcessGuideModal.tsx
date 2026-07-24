@@ -34,7 +34,7 @@ export const BessProcessGuideModal: React.FC<BessProcessGuideModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-opacity">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 dark:bg-black/80 backdrop-blur-md transition-opacity">
       <div 
         className="fixed inset-0" 
         onClick={onClose}

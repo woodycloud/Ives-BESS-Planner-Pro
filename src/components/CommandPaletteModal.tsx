@@ -16,10 +16,16 @@ import {
   Moon, 
   Globe, 
   Zap, 
-  HardDrive
+  HardDrive,
+  FolderOpen,
+  Plus,
+  Copy,
+  RefreshCw,
+  FolderSync
 } from 'lucide-react';
 import { ProductionLineModel } from '../types/bess';
 import { Language, translations } from '../utils/i18n';
+import { useProject } from '../context/ProjectContext';
 
 interface CommandPaletteModalProps {
   isOpen: boolean;
@@ -33,6 +39,7 @@ interface CommandPaletteModalProps {
   onOpenReport: () => void;
   onExportJson: () => void;
   onImportJsonClick: () => void;
+  onOpenProjectMenu?: (tab?: 'new' | 'open' | 'saveAs') => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
   lang: Language;
@@ -50,6 +57,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   onOpenReport,
   onExportJson,
   onImportJsonClick,
+  onOpenProjectMenu,
   theme,
   onToggleTheme,
   lang,
@@ -57,6 +65,13 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 }) => {
   const [query, setQuery] = useState('');
   const t = translations[lang];
+
+  let projectContext: ReturnType<typeof useProject> | null = null;
+  try {
+    projectContext = useProject();
+  } catch {
+    // Fallback if rendered outside provider
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -72,6 +87,50 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   };
 
   const commandItems = [
+    // Project Management Commands
+    ...(onOpenProjectMenu ? [
+      {
+        id: 'prj-open',
+        category: lang === 'en' ? 'Project' : '工程项目管理',
+        title: lang === 'en' ? 'Open Project Manager' : '打开工程项目管理中心 (Open Project)',
+        subtitle: lang === 'en' ? 'Manage, search, or switch saved engineering projects' : '浏览、搜索与加载历史工程，支持多项目无缝切换',
+        icon: FolderOpen,
+        shortcut: 'Ctrl+O',
+        action: () => onOpenProjectMenu('open')
+      },
+      {
+        id: 'prj-new',
+        category: lang === 'en' ? 'Project' : '工程项目管理',
+        title: lang === 'en' ? 'New Engineering Project' : '新建工程项目 (New Project)',
+        subtitle: lang === 'en' ? 'Create a new project from 5MWh / 6.25MWh templates' : '基于 5.01MWh / 6.25MWh / 10GWh 工业模板创建新工程',
+        icon: Plus,
+        shortcut: 'Ctrl+N',
+        action: () => onOpenProjectMenu('new')
+      },
+      {
+        id: 'prj-save-as',
+        category: lang === 'en' ? 'Project' : '工程项目管理',
+        title: lang === 'en' ? 'Save Project As...' : '另存为工程副本 (Save As...)',
+        subtitle: lang === 'en' ? 'Duplicate current project with all parameters' : '为当前工程分配新名称与编码，保存为独立副本',
+        icon: Copy,
+        shortcut: 'Ctrl+Shift+S',
+        action: () => onOpenProjectMenu('saveAs')
+      }
+    ] : []),
+
+    ...(projectContext && projectContext.hasRecoverableDraft ? [
+      {
+        id: 'prj-recover',
+        category: lang === 'en' ? 'Project' : '工程项目管理',
+        title: lang === 'en' ? 'Recover Auto-Saved Draft' : '恢复未保存的自动备份草案 (Recover)',
+        subtitle: lang === 'en' ? 'Restore unsaved changes from local auto-save engine' : '一键恢复系统在崩溃或误关闭前自动备份的修改草案',
+        icon: RefreshCw,
+        shortcut: 'Ctrl+R',
+        action: () => projectContext?.recoverDraft()
+      }
+    ] : []),
+
+    // Navigation
     {
       id: 'nav-overview',
       category: lang === 'en' ? 'Navigation' : '页面导航',
@@ -152,8 +211,14 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       title: lang === 'en' ? 'Save Workspace to IndexedDB' : '保存当前工作区至 IndexedDB 本地数据库',
       subtitle: lang === 'en' ? 'Persist model changes for offline PWA usage' : '持久化存入浏览器离线数据库，离线随时访问',
       icon: Save,
-      shortcut: 'S',
-      action: onSaveModel
+      shortcut: 'Ctrl+S',
+      action: () => {
+        if (projectContext) {
+          projectContext.saveCurrentProject();
+        } else {
+          onSaveModel();
+        }
+      }
     },
 
     // System Preferences
@@ -188,7 +253,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-opacity">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/70 dark:bg-black/80 backdrop-blur-md transition-opacity">
       
       <div 
         className="fixed inset-0" 

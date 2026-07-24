@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
+import { ProjectBar } from './components/ProjectBar';
+import { ProjectMenuModal } from './components/ProjectMenuModal';
 import { OverviewKpiCards } from './components/OverviewKpiCards';
 import { BottleneckChart } from './components/BottleneckChart';
 import { StationHeatmap } from './components/StationHeatmap';
@@ -11,23 +13,43 @@ import { SimulationReportModal } from './components/SimulationReportModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { BessProcessGuideModal } from './components/BessProcessGuideModal';
 
+import { ProjectProvider, useProject } from './context/ProjectContext';
 import { ProductionLineModel, PlanVersionSnapshot, CapacityCalculationResult } from './types/bess';
 import { calculateLineCapacity } from './utils/capacityCalculator';
 import { DEFAULT_LINE_MODELS } from './utils/defaultPresets';
 import { Language } from './utils/i18n';
-import { 
-  initStorage, 
-  saveModel, 
-  getAllVersionSnapshots, 
-  saveVersionSnapshot, 
-  deleteVersionSnapshot 
-} from './utils/indexedDB';
 
-export default function App() {
-  const [models, setModels] = useState<ProductionLineModel[]>(DEFAULT_LINE_MODELS);
-  const [activeModelId, setActiveModelId] = useState<string>(DEFAULT_LINE_MODELS[0].id);
-  const [versionSnapshots, setVersionSnapshots] = useState<PlanVersionSnapshot[]>([]);
-  
+function ToastNotification() {
+  const { toast } = useProject();
+  if (!toast) return null;
+
+  return (
+    <div className="fixed top-12 right-6 z-50 transition-all duration-300 animate-in fade-in slide-in-from-top-4 pointer-events-none">
+      <div className={`px-4 py-3 rounded-2xl shadow-2xl border backdrop-blur-md flex items-center space-x-3 text-xs font-semibold ${
+        toast.type === 'error'
+          ? 'bg-rose-950/90 border-rose-500/40 text-rose-200 shadow-rose-950/50'
+          : 'bg-slate-900/90 dark:bg-slate-900/95 border-[#007AFF]/40 text-white shadow-blue-950/50 ring-1 ring-[#007AFF]/30'
+      }`}>
+        <span>{toast.message}</span>
+      </div>
+    </div>
+  );
+}
+
+function WorkspaceInner() {
+  const { 
+    project, 
+    allProjects, 
+    updateLineModel, 
+    saveCurrentProject, 
+    addVersionSnapshot, 
+    deleteVersionSnapshotById,
+    exportProjectJson
+  } = useProject();
+
+  // Active line model is bound directly to the unified project object
+  const activeModel = project.lineModel;
+
   // Language state: default to 'zh', support 'en'
   const [lang, setLang] = useState<Language>('zh');
 
@@ -58,38 +80,46 @@ export default function App() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
+  // Project Manager Modal State
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false);
+  const [projectMenuInitialTab, setProjectMenuInitialTab] = useState<'new' | 'open' | 'saveAs'>('open');
+
+  const handleOpenProjectMenu = (tab: 'new' | 'open' | 'saveAs' = 'open') => {
+    setProjectMenuInitialTab(tab);
+    setIsProjectMenuOpen(true);
+  };
+
   // PWA Install prompt state
   const [pwaDeferredPrompt, setPwaDeferredPrompt] = useState<any>(null);
   const [isPwaInstalled, setIsPwaInstalled] = useState(false);
 
-  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K)
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K, Ctrl+S, Ctrl+O, Ctrl+N)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleOpenProjectMenu('saveAs');
+        } else {
+          saveCurrentProject();
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        handleOpenProjectMenu('open');
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleOpenProjectMenu('new');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [saveCurrentProject]);
 
-  // Initialize IndexedDB storage and load versions
+  // Register Service Worker for PWA
   useEffect(() => {
-    async function loadData() {
-      const storedModels = await initStorage();
-      setModels(storedModels);
-      if (storedModels.length > 0) {
-        setActiveModelId(storedModels[0].id);
-      }
-
-      const snapshots = await getAllVersionSnapshots();
-      setVersionSnapshots(snapshots);
-    }
-
-    loadData();
-
-    // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(
         (reg) => console.log('ServiceWorker registered:', reg.scope),
@@ -97,7 +127,6 @@ export default function App() {
       );
     }
 
-    // Capture PWA install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setPwaDeferredPrompt(e);
@@ -117,37 +146,20 @@ export default function App() {
     };
   }, []);
 
-  // Get active line model
-  const activeModel = useMemo(() => {
-    return models.find(m => m.id === activeModelId) || models[0];
-  }, [models, activeModelId]);
-
-  // Compute baseline capacity calculation result
+  // Compute baseline capacity calculation result directly from single source of truth
   const baselineResult = useMemo(() => {
     return calculateLineCapacity(activeModel);
   }, [activeModel]);
 
-  // Save current active model to IndexedDB
-  const handleSaveModel = async () => {
-    await saveModel(activeModel);
-    alert(`Model "${activeModel.name}" successfully saved to IndexedDB storage.`);
-  };
-
-  // Update active model from editor
-  const handleUpdateModel = async (updatedModel: ProductionLineModel) => {
-    setModels(prev => prev.map(m => m.id === updatedModel.id ? updatedModel : m));
-    await saveModel(updatedModel);
-  };
-
   // Reset active model to preset default
   const handleResetToDefault = () => {
     const preset = DEFAULT_LINE_MODELS.find(p => p.id === activeModel.id) || DEFAULT_LINE_MODELS[0];
-    handleUpdateModel({ ...preset, id: activeModel.id });
+    updateLineModel({ ...preset, id: activeModel.id });
   };
 
   // Apply What-if simulated model as baseline
   const handleApplyScenarioToModel = (simulatedModel: ProductionLineModel) => {
-    handleUpdateModel(simulatedModel);
+    updateLineModel(simulatedModel);
     setIsWhatIfActive(false);
     setActiveTab('overview');
   };
@@ -158,30 +170,10 @@ export default function App() {
     simulatedModel: ProductionLineModel, 
     result: CapacityCalculationResult
   ) => {
-    const snapshot: PlanVersionSnapshot = {
-      id: `ver-${Date.now()}`,
-      versionName,
-      createdAt: new Date().toISOString(),
-      notes: `Target: ${simulatedModel.targetAnnualGWh} GWh | Shifts: ${simulatedModel.shiftConfig.shiftsPerDay}`,
-      lineModel: simulatedModel,
-      result
-    };
-
-    await saveVersionSnapshot(snapshot);
-    setVersionSnapshots(prev => [...prev, snapshot]);
-    alert(`Version snapshot "${versionName}" saved. View matrix in "Version Comparison".`);
-  };
-
-  // Delete version snapshot
-  const handleDeleteSnapshot = async (id: string) => {
-    await deleteVersionSnapshot(id);
-    setVersionSnapshots(prev => prev.filter(s => s.id !== id));
-  };
-
-  // Restore snapshot as active workspace
-  const handleRestoreSnapshot = (snapshot: PlanVersionSnapshot) => {
-    handleUpdateModel(snapshot.lineModel);
-    setActiveTab('overview');
+    await addVersionSnapshot(
+      versionName, 
+      `Target: ${simulatedModel.targetAnnualGWh} GWh | Shifts: ${simulatedModel.shiftConfig.shiftsPerDay}`
+    );
   };
 
   // Export CSV
@@ -204,43 +196,10 @@ export default function App() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${activeModel.name}_capacity_report.csv`);
+    link.setAttribute('download', `${project.meta.code}_${activeModel.name}_capacity_report.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Export JSON Backup
-  const handleExportJson = () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(activeModel, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `${activeModel.id}_config.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  };
-
-  // Import JSON Backup
-  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const imported = JSON.parse(evt.target?.result as string) as ProductionLineModel;
-        if (imported.id && imported.stations) {
-          handleUpdateModel(imported);
-          alert(`Successfully imported model: ${imported.name}`);
-        } else {
-          alert('Invalid JSON config file format');
-        }
-      } catch (err) {
-        alert('Failed to parse JSON config file');
-      }
-    };
-    reader.readAsText(file);
   };
 
   // Trigger PWA Installation
@@ -260,12 +219,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200 selection:bg-teal-500 selection:text-white">
       
+      <ToastNotification />
+
+      {/* Top Project Manager Bar & Auto-Save Status */}
+      <ProjectBar 
+        onOpenProjectMenu={handleOpenProjectMenu}
+        lang={lang}
+      />
+
       {/* Top Navbar Header */}
       <Navbar
-        models={models}
+        models={DEFAULT_LINE_MODELS}
         activeModel={activeModel}
-        onSelectModel={(id) => setActiveModelId(id)}
-        onSaveModel={handleSaveModel}
+        onSelectModel={(id) => {
+          const tmpl = DEFAULT_LINE_MODELS.find(m => m.id === id);
+          if (tmpl) updateLineModel(tmpl);
+        }}
+        onSaveModel={saveCurrentProject}
         onOpenVersions={() => setActiveTab('compare')}
         onToggleWhatIf={() => {
           setIsWhatIfActive(!isWhatIfActive);
@@ -273,8 +243,8 @@ export default function App() {
         }}
         isWhatIfActive={isWhatIfActive}
         onOpenReport={() => setIsReportOpen(true)}
-        onExportJson={handleExportJson}
-        onImportJson={handleImportJson}
+        onExportJson={exportProjectJson}
+        onImportJson={() => handleOpenProjectMenu('open')}
         isPwaInstalled={isPwaInstalled}
         onInstallPwa={handleInstallPwa}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
@@ -288,7 +258,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-24 md:py-6 space-y-6">
+      <main className="flex-1 w-full max-w-[1920px] mx-auto px-2.5 sm:px-4 lg:px-6 pt-4 pb-24 md:py-6 space-y-6">
         
         {/* KPI Cards Banner */}
         <OverviewKpiCards
@@ -306,7 +276,7 @@ export default function App() {
             <BottleneckChart
               result={baselineResult}
               lang={lang}
-              onStationSelect={(id) => {
+              onStationSelect={() => {
                 setActiveTab('modeling');
               }}
             />
@@ -314,7 +284,7 @@ export default function App() {
             <StationHeatmap
               result={baselineResult}
               lang={lang}
-              onSelectStation={(id) => {
+              onSelectStation={() => {
                 setActiveTab('modeling');
               }}
             />
@@ -326,7 +296,7 @@ export default function App() {
           <GwhCapacityCalculator
             model={activeModel}
             result={baselineResult}
-            onUpdateModel={handleUpdateModel}
+            onUpdateModel={updateLineModel}
             lang={lang}
           />
         )}
@@ -335,7 +305,7 @@ export default function App() {
         {activeTab === 'modeling' && (
           <LineModelingView
             model={activeModel}
-            onUpdateModel={handleUpdateModel}
+            onUpdateModel={updateLineModel}
             onResetToDefault={handleResetToDefault}
             onNavigateToGwhCalc={() => setActiveTab('gwhCalc')}
             lang={lang}
@@ -356,9 +326,12 @@ export default function App() {
         {/* Tab 5: Multi-Version Comparison Matrix */}
         {activeTab === 'compare' && (
           <MultiVersionCompare
-            snapshots={versionSnapshots}
-            onDeleteSnapshot={handleDeleteSnapshot}
-            onRestoreSnapshot={handleRestoreSnapshot}
+            snapshots={project.versions}
+            onDeleteSnapshot={deleteVersionSnapshotById}
+            onRestoreSnapshot={(s) => {
+              updateLineModel(s.lineModel);
+              setActiveTab('overview');
+            }}
             onExportCompareCsv={handleExportCsv}
             lang={lang}
           />
@@ -366,22 +339,31 @@ export default function App() {
 
       </main>
 
+      {/* Engineering Project Management Modal (New / Open / Save As / Recent / Recover) */}
+      <ProjectMenuModal
+        isOpen={isProjectMenuOpen}
+        onClose={() => setIsProjectMenuOpen(false)}
+        initialTab={projectMenuInitialTab}
+        lang={lang}
+      />
+
       {/* Command Palette Modal (Cmd + K) */}
       <CommandPaletteModal
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        models={models}
+        models={DEFAULT_LINE_MODELS}
         activeModel={activeModel}
-        onSelectModel={(id) => setActiveModelId(id)}
-        onSaveModel={handleSaveModel}
-        onOpenReport={() => setIsReportOpen(true)}
-        onExportJson={handleExportJson}
-        onImportJsonClick={() => {
-          const input = document.querySelector('input[type="file"][accept=".json"]') as HTMLInputElement;
-          input?.click();
+        onSelectModel={(id) => {
+          const tmpl = DEFAULT_LINE_MODELS.find(m => m.id === id);
+          if (tmpl) updateLineModel(tmpl);
         }}
+        onSaveModel={saveCurrentProject}
+        onOpenReport={() => setIsReportOpen(true)}
+        onExportJson={exportProjectJson}
+        onImportJsonClick={() => handleOpenProjectMenu('open')}
+        onOpenProjectMenu={handleOpenProjectMenu}
         theme={theme}
         onToggleTheme={toggleTheme}
         lang={lang}
@@ -409,14 +391,22 @@ export default function App() {
       <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/40 py-4 mb-14 md:mb-0 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="font-medium">
-            IVES BESS-Planner Pro · Battery Storage Container Assembly Planning & Offline PWA System
+            IVES BESS-Planner Pro · Project Architecture v2.0 ({project.meta.code})
           </div>
           <div className="text-[11px] text-slate-400 font-mono">
-            IndexedDB Storage · Takt Time Modeling · GWh Capacity Planning
+            Unified Single Source State · Debounced Auto-Save · Project Manager
           </div>
         </div>
       </footer>
 
-      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ProjectProvider>
+      <WorkspaceInner />
+    </ProjectProvider>
   );
 }

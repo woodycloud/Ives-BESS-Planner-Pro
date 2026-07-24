@@ -5,16 +5,55 @@
 @layer base {
   html, body {
     height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   body {
-    @apply bg-[#e6eae4] text-slate-900 dark:bg-[#121715] dark:text-slate-100 antialiased transition-colors duration-200;
+    @apply bg-[#f5f5f7] text-[#1d1d1f] dark:bg-[#000000] dark:text-[#f5f5f7] antialiased transition-colors duration-300 selection:bg-blue-500/20 selection:text-blue-600;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 }
 
-.glass-panel {
-  @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/80 dark:border-slate-800/80 shadow-xs rounded-3xl;
+.apple-card {
+  @apply bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl border border-black/[0.04] dark:border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)] rounded-3xl transition-all duration-300;
 }
 
-.glass-pill {
-  @apply bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-md rounded-full border border-white/50 dark:border-slate-700/50;
+.apple-pill {
+  @apply bg-black/[0.05] dark:bg-white/[0.1] backdrop-blur-xl rounded-full border border-black/[0.03] dark:border-white/[0.05];
 }
+
+/* iOS Momentum Scrolling & Custom Scrollbars */
+.ios-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area padding helper for iOS sticky bottom bar */
+.pb-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+@keyframes materialFlow {
+  0% {
+    stroke-dashoffset: 24;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-material-flow {
+  stroke-dasharray: 6 6;
+  animation: materialFlow 1.2s linear infinite;
+}
+

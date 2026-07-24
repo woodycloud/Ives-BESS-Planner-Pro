@@ -31,7 +31,7 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
     
     // Standard time per lane in minutes
     const stdTimeMin = (st.standardTimeSec || 60) / 60;
-    const baseTimeMin = stdTimeMin / (parallelLanes * machinesCount);
+    const baseTimeMin = stdTimeMin / parallelLanes;
 
     // OEE breakdown
     const avail = (st.availabilityRate || 100) / 100;
@@ -50,10 +50,14 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
       bottleneckStationId = st.id;
     }
 
+    const stationOperatorsTotal = st.operatorsCount * parallelLanes * shiftConfig.shiftsPerDay;
+    const stationEquipmentCost = (st.equipmentCostTenThousand || 0) * parallelLanes;
+    const stationFootprint = (st.footprintSqM || 0) * parallelLanes;
+
     totalCycleTimeMin += effectiveCycleTimeMin;
-    totalOperators += st.operatorsCount * shiftConfig.shiftsPerDay;
-    totalEquipmentCost += st.equipmentCostTenThousand || 0;
-    totalFootprintSqM += st.footprintSqM || 0;
+    totalOperators += stationOperatorsTotal;
+    totalEquipmentCost += stationEquipmentCost;
+    totalFootprintSqM += stationFootprint;
     lineFPYProduct *= Math.max(0.01, qual);
     sumOEE += oeeFrac * 100;
 
@@ -66,9 +70,9 @@ export function calculateLineCapacity(model: ProductionLineModel): CapacityCalcu
       effectiveOEEPercent: Math.round(oeeFrac * 1000) / 10,
       utilizationRatePercent: 0, // calculated next
       isBottleneck: false,
-      operatorsTotal: st.operatorsCount * shiftConfig.shiftsPerDay,
-      equipmentCost: st.equipmentCostTenThousand || 0,
-      footprint: st.footprintSqM || 0,
+      operatorsTotal: stationOperatorsTotal,
+      equipmentCost: stationEquipmentCost,
+      footprint: stationFootprint,
       passRate: Math.round(qual * 1000) / 10
     });
   });

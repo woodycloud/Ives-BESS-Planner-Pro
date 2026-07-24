@@ -3,7 +3,7 @@ export type Language = 'zh' | 'en';
 export const translations = {
   zh: {
     // Header & Navbar
-    subtitle: '储能集装箱产线产能规划与乐高布局仿真系统',
+    subtitle: '储能集装箱产线产能规划与仿真评估系统',
     proPwa: '专业版 PWA',
     presetLabel: '产线预设:',
     dbSynced: 'IndexedDB 已同步',
@@ -22,8 +22,8 @@ export const translations = {
     // Sub-nav tabs
     tabs: {
       overview: '产能概览与热力图',
+      gwhCalc: 'GWh 产能测算器',
       modeling: '产线工站建模',
-      layout: '设备乐高布局',
       whatif: 'What-if 动态模拟',
       compare: '多方案版本对比',
       stationsCount: '工站',
@@ -261,7 +261,7 @@ export const translations = {
 
   en: {
     // Header & Navbar
-    subtitle: 'BESS Container Line Capacity Planning & Lego Layout Simulator',
+    subtitle: 'BESS Container Line Capacity Planning & Simulation System',
     proPwa: 'PRO PWA',
     presetLabel: 'Preset:',
     dbSynced: 'IndexedDB Synced',
@@ -280,8 +280,8 @@ export const translations = {
     // Sub-nav tabs
     tabs: {
       overview: 'Capacity Overview & Heatmap',
+      gwhCalc: 'GWh Capacity Calculator',
       modeling: 'Station Modeling',
-      layout: 'Lego 3D Layout',
       whatif: 'What-if Simulator',
       compare: 'Multi-Version Compare',
       stationsCount: 'Stations',

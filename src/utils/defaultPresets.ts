@@ -5,50 +5,32 @@
 import { ProductionLineModel, ContainerSpec, StationParameter } from '../types/bess';
 
 export const BESS_CONTAINER_SPECS: Record<string, ContainerSpec> = {
-  L6250: {
-    id: 'spec-6.25mwh',
-    name: '6.25MWh 20尺液冷储能集装箱 (L6250)',
-    energyCapacityMWh: 6.25,
-    voltageLevelV: 1500,
-    packCount: 480,
-    clusterCount: 15,
-    dimensions: '20尺高柜超高能量密度储能舱'
-  },
-  L10000: {
-    id: 'spec-10mwh',
-    name: '40ft 10MWh 储能集装箱 (L10000)',
-    energyCapacityMWh: 10.0,
-    voltageLevelV: 1500,
-    packCount: 768,
-    clusterCount: 24,
-    dimensions: '40尺特种高容量储能舱体'
-  },
-  L5000: {
-    id: 'spec-5mwh',
-    name: '5.0MWh 20尺液冷储能集装箱 (L5000)',
-    energyCapacityMWh: 5.0,
-    voltageLevelV: 1500,
-    packCount: 384,
-    clusterCount: 12,
-    dimensions: '20尺高柜标准储能舱'
-  },
   S3440: {
     id: 'spec-3.44mwh',
-    name: '3.44MWh 20尺风冷/液冷储能集装箱 (S3440)',
+    name: '3.44MWh 20尺风/液冷储能集装箱 (S3440)',
     energyCapacityMWh: 3.44,
     voltageLevelV: 1000,
     packCount: 288,
     clusterCount: 12,
     dimensions: '20尺标准 ISO 集装箱舱体'
   },
-  M2500: {
-    id: 'spec-2.5mwh',
-    name: '2.5MWh 工商业储能户外一体柜 (M2500)',
-    energyCapacityMWh: 2.5,
-    voltageLevelV: 750,
-    packCount: 192,
-    clusterCount: 8,
-    dimensions: '10尺重型户外储能柜'
+  L5000: {
+    id: 'spec-5mwh',
+    name: '5.01MWh 20尺高密液冷储能集装箱 (L5000)',
+    energyCapacityMWh: 5.01,
+    voltageLevelV: 1500,
+    packCount: 384,
+    clusterCount: 12,
+    dimensions: '20尺高柜标准储能舱'
+  },
+  L6250: {
+    id: 'spec-6.25mwh',
+    name: '6.25MWh 20尺超高密液冷储能集装箱 (L6250)',
+    energyCapacityMWh: 6.25,
+    voltageLevelV: 1500,
+    packCount: 480,
+    clusterCount: 15,
+    dimensions: '20尺高柜超高能量密度储能舱'
   }
 };
 
@@ -496,409 +478,120 @@ function generateGigaFactoryStations(): StationParameter[] {
 }
 
 export const DEFAULT_LINE_MODELS: ProductionLineModel[] = [
+  // 1. 5GWh Lean Line
   {
-    id: 'preset-5mwh-flex',
-    name: '5.0MWh 液冷储能集装箱装配产线 (柔性10工站)',
-    version: 'V2.0-柔性版',
+    id: 'preset-5gwh-lean',
+    name: '5GWh 储能精益自动化产线 (5GWh 精益)',
+    version: 'V2.0-5GWh精益',
     updatedAt: new Date().toISOString(),
-    description: '专为 5.0MWh 20 尺高能量密度液冷储能舱制造设计，涵盖簇级机架推装、巴排激光焊接以及三级 BMS 通讯联调测试。',
-    containerSpec: BESS_CONTAINER_SPECS.L5000,
-    shiftConfig: {
-      shiftsPerDay: 2,
-      hoursPerShift: 10,
-      plannedDowntimeMinPerShift: 60,
-      operatingDaysPerYear: 300
-    },
-    targetAnnualGWh: 2.5,
-    targetTaktTimeMin: 60,
-    stations: [
-      {
-        id: 'st-01',
-        code: 'ST-01',
-        name: '集装箱上线与结构底板预装工站',
-        category: 'PREP',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 1800,
-        parallelLanes: 1,
-        operatorsCount: 4,
-        machinesCount: 1,
-        availabilityRate: 98,
-        performanceRate: 95,
-        qualityRate: 99,
-        reworkRate: 1,
-        avgReworkTimeSec: 600,
-        footprintSqM: 120,
-        equipmentCostTenThousand: 150,
-        description: '箱体外观检查、绝缘地板铺设、导轨结构安装与液冷主管预埋。',
-        keyQualityPoints: ['集装箱绝缘阻值 > 100MΩ', '螺栓紧固扭矩 45Nm']
-      },
-      {
-        id: 'st-02',
-        code: 'ST-02',
-        name: 'PACK 模组激光焊接与前道预组装工站',
-        category: 'PACK',
-        automationLevel: 'FULL_AUTO',
-        standardTimeSec: 2700,
-        parallelLanes: 1,
-        operatorsCount: 2,
-        machinesCount: 1,
-        availabilityRate: 92,
-        performanceRate: 90,
-        qualityRate: 98,
-        reworkRate: 2,
-        avgReworkTimeSec: 900,
-        footprintSqM: 180,
-        equipmentCostTenThousand: 650,
-        description: '电芯自动分选、激光巴排焊接、PACK 外壳封装与一级 BMS 线束插接。',
-        keyQualityPoints: ['焊缝平整度与极柱对齐', '飞溅物实时气吸除尘']
-      },
-      {
-        id: 'st-03',
-        code: 'ST-03',
-        name: 'PACK 电池簇机架推装与伺服拧紧工站',
-        category: 'CLUSTER',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 2400,
-        parallelLanes: 1,
-        operatorsCount: 3,
-        machinesCount: 1,
-        availabilityRate: 95,
-        performanceRate: 92,
-        qualityRate: 99,
-        reworkRate: 1,
-        avgReworkTimeSec: 600,
-        footprintSqM: 150,
-        equipmentCostTenThousand: 320,
-        description: 'PACK 模组推装入集装箱固定机架，多轴伺服扭矩螺栓拧紧。',
-        keyQualityPoints: ['高压绝缘防护全覆盖', '双扭矩/角度安全监控']
-      },
-      {
-        id: 'st-04',
-        code: 'ST-04',
-        name: '高压动力铜排与汇流柜接线工站',
-        category: 'ELECTRICAL',
-        automationLevel: 'MANUAL',
-        standardTimeSec: 2100,
-        parallelLanes: 1,
-        operatorsCount: 5,
-        machinesCount: 1,
-        availabilityRate: 99,
-        performanceRate: 90,
-        qualityRate: 97,
-        reworkRate: 3,
-        avgReworkTimeSec: 450,
-        footprintSqM: 100,
-        equipmentCostTenThousand: 80,
-        description: '簇间 Busbar 铜排连接、1500V 汇流柜接线与 BMS 采样线束走线。',
-        keyQualityPoints: ['绝缘保护罩安装到位', '线束相色标志准确']
-      },
-      {
-        id: 'st-05',
-        code: 'ST-05',
-        name: '液冷机组管路连接与消防系统联调',
-        category: 'AUXILIARY',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 1800,
-        parallelLanes: 1,
-        operatorsCount: 3,
-        machinesCount: 1,
-        availabilityRate: 96,
-        performanceRate: 94,
-        qualityRate: 99,
-        reworkRate: 1,
-        avgReworkTimeSec: 300,
-        footprintSqM: 90,
-        equipmentCostTenThousand: 220,
-        description: '工业液冷机组介质充注耐压测试与七氟丙烷消防探头联调。',
-        keyQualityPoints: ['保压测试 1.5MPa 24h 无渗漏', '消防探头联动信号正常']
-      },
-      {
-        id: 'st-06',
-        code: 'ST-06',
-        name: 'PCS 逆变舱集成与网关通讯对接',
-        category: 'PCS',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 2100,
-        parallelLanes: 1,
-        operatorsCount: 4,
-        machinesCount: 1,
-        availabilityRate: 95,
-        performanceRate: 92,
-        qualityRate: 98,
-        reworkRate: 2,
-        avgReworkTimeSec: 600,
-        footprintSqM: 140,
-        equipmentCostTenThousand: 480,
-        description: '逆变舱推装、交直流母线安装与工业以太网网关部署。',
-        keyQualityPoints: ['相序校验无误', '电气间隙与爬电距离达标']
-      },
-      {
-        id: 'st-07',
-        code: 'ST-07',
-        name: '绝缘耐压测试与 BMS 压差校准工站',
-        category: 'TEST',
-        automationLevel: 'TEST_BENCH',
-        standardTimeSec: 2400,
-        parallelLanes: 1,
-        operatorsCount: 2,
-        machinesCount: 2,
-        availabilityRate: 97,
-        performanceRate: 95,
-        qualityRate: 96,
-        reworkRate: 4,
-        avgReworkTimeSec: 1200,
-        footprintSqM: 160,
-        equipmentCostTenThousand: 520,
-        description: '高压绝缘耐压测试 (>2GΩ) 与 BMS 单体电芯压差 (<20mV) 校准。',
-        keyQualityPoints: ['对地绝缘阻值 > 2GΩ', '静态电芯压差 < 20mV']
-      },
-      {
-        id: 'st-08',
-        code: 'ST-08',
-        name: '全功率充放电容量预激活测试矩阵',
-        category: 'TEST',
-        automationLevel: 'TEST_BENCH',
-        standardTimeSec: 3600,
-        parallelLanes: 2,
-        operatorsCount: 2,
-        machinesCount: 2,
-        availabilityRate: 94,
-        performanceRate: 90,
-        qualityRate: 97,
-        reworkRate: 3,
-        avgReworkTimeSec: 1800,
-        footprintSqM: 250,
-        equipmentCostTenThousand: 880,
-        description: '1C 额定功率充放电循环测试、热成像红外扫描与急停 EPO 关断测试。',
-        keyQualityPoints: ['放电容量达标率 100%', '局部无异常高温红外点']
-      },
-      {
-        id: 'st-09',
-        code: 'ST-09',
-        name: '铭牌核对、QC 终检与端子防尘盖',
-        category: 'PACKAGING',
-        automationLevel: 'MANUAL',
-        standardTimeSec: 1200,
-        parallelLanes: 1,
-        operatorsCount: 2,
-        machinesCount: 1,
-        availabilityRate: 99,
-        performanceRate: 98,
-        qualityRate: 99,
-        reworkRate: 1,
-        avgReworkTimeSec: 300,
-        footprintSqM: 80,
-        equipmentCostTenThousand: 30,
-        description: '出厂铭牌参数核对、风机防尘盖与高压端子防护罩完备性检查。',
-        keyQualityPoints: ['铭牌参数 100% 准确', '端子防护盖齐全']
-      },
-      {
-        id: 'st-10',
-        code: 'ST-10',
-        name: '重型龙门吊离线吊装与发运包装',
-        category: 'PACKAGING',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 1500,
-        parallelLanes: 1,
-        operatorsCount: 4,
-        machinesCount: 1,
-        availabilityRate: 98,
-        performanceRate: 96,
-        qualityRate: 100,
-        reworkRate: 0,
-        avgReworkTimeSec: 0,
-        footprintSqM: 200,
-        equipmentCostTenThousand: 280,
-        description: '40t 龙门吊下线吊装、防潮塑封包封与平板拖车固定加固。',
-        keyQualityPoints: ['40t 吊装安全规范通过', '防潮包封无破损']
-      }
-    ]
-  },
-
-  {
-    id: 'preset-gwh-ultra-24st',
-    name: '5.0MWh 超级储能 GigaFactory 智能化产线 (24工站)',
-    version: 'V3.0-超级超级工厂',
-    updatedAt: new Date().toISOString(),
-    description: '高密度 24 工站超级工厂产线，配置双轨道并行 AGV、冗余激光焊接龙门架以及 4 矩阵充放电检测测试区，专为 GWh 级大规模储能项目设计。',
+    description: '5GWh 年产能精益高效储能产线。采用 5.01MWh 20尺高柜液冷舱，3班300天生产，目标年产 1,000 台集装箱，全线需求节拍 30 分钟/台，支持柔性换型与双并线关键检测。',
     containerSpec: BESS_CONTAINER_SPECS.L5000,
     shiftConfig: {
       shiftsPerDay: 3,
       hoursPerShift: 8,
       plannedDowntimeMinPerShift: 30,
+      operatingDaysPerYear: 300
+    },
+    targetAnnualGWh: 5.0,
+    targetTaktTimeMin: 30.0,
+    stations: generateGigaFactoryStations().slice(0, 16).map((s, idx) => {
+      const baseMin = s.standardTimeSec / 60;
+      const neededLanes = Math.max(1, Math.ceil(baseMin / 30.0));
+      return {
+        ...s,
+        id: `st5g-${idx + 1}`,
+        code: `ST-${(idx + 1).toString().padStart(2, '0')}`,
+        parallelLanes: neededLanes,
+        machinesCount: neededLanes
+      };
+    })
+  },
+
+  // 2. 10GWh Intelligent Line
+  {
+    id: 'preset-10gwh-intelligent',
+    name: '10GWh 储能智能化 Gigafactory 产线 (10GWh 智能)',
+    version: 'V3.0-10GWh智能',
+    updatedAt: new Date().toISOString(),
+    description: '10GWh 年产能 GigaFactory 智能化标准产线。采用 5.01MWh 液冷储能舱，3班330天高效生产，目标年产 2,000 台，全线需求节拍 22.5 分钟/台，配备全流程 AGV 与 24 工站智能矩阵。',
+    containerSpec: BESS_CONTAINER_SPECS.L5000,
+    shiftConfig: {
+      shiftsPerDay: 3,
+      hoursPerShift: 8,
+      plannedDowntimeMinPerShift: 20,
       operatingDaysPerYear: 330
     },
     targetAnnualGWh: 10.0,
-    targetTaktTimeMin: 22,
-    stations: generateGigaFactoryStations()
+    targetTaktTimeMin: 22.5,
+    stations: generateGigaFactoryStations().map((s, idx) => {
+      const baseMin = s.standardTimeSec / 60;
+      const neededLanes = Math.max(1, Math.ceil(baseMin / 22.5));
+      return {
+        ...s,
+        id: `st10g-${idx + 1}`,
+        code: `ST-${(idx + 1).toString().padStart(2, '0')}`,
+        parallelLanes: neededLanes,
+        machinesCount: neededLanes
+      };
+    })
   },
+
+  // 3. 15GWh Benchmark Line
   {
-    id: 'preset-3.44mwh-std',
-    name: '3.44MWh 常规储能集装箱装配产线 (6工站标配)',
-    version: 'V1.0-标准版',
+    id: 'preset-15gwh-giga',
+    name: '15GWh 储能 Gigafactory 极速精益产线 (15GWh 标杆)',
+    version: 'V4.5-15GWh标杆',
     updatedAt: new Date().toISOString(),
-    description: '标准 3.44MWh 风冷/液冷储能集装箱产线，具备灵活排班与精益工站配置，年产能约 1.2 GWh。',
-    containerSpec: BESS_CONTAINER_SPECS.S3440,
-    shiftConfig: {
-      shiftsPerDay: 2,
-      hoursPerShift: 8,
-      plannedDowntimeMinPerShift: 45,
-      operatingDaysPerYear: 280
-    },
-    targetAnnualGWh: 1.2,
-    targetTaktTimeMin: 75,
-    stations: [
-      {
-        id: 'st34-01',
-        code: 'ST-01',
-        name: '集装箱底盘与导轨预装工站',
-        category: 'PREP',
-        automationLevel: 'MANUAL',
-        standardTimeSec: 2100,
-        parallelLanes: 1,
-        operatorsCount: 3,
-        machinesCount: 1,
-        availabilityRate: 98,
-        performanceRate: 95,
-        qualityRate: 99,
-        reworkRate: 1,
-        avgReworkTimeSec: 600,
-        footprintSqM: 100,
-        equipmentCostTenThousand: 80
-      },
-      {
-        id: 'st34-02',
-        code: 'ST-02',
-        name: 'PACK 焊接与模组组装工站',
-        category: 'PACK',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 3300,
-        parallelLanes: 1,
-        operatorsCount: 3,
-        machinesCount: 1,
-        availabilityRate: 90,
-        performanceRate: 88,
-        qualityRate: 97,
-        reworkRate: 3,
-        avgReworkTimeSec: 900,
-        footprintSqM: 150,
-        equipmentCostTenThousand: 400
-      },
-      {
-        id: 'st34-03',
-        code: 'ST-03',
-        name: 'PACK 电池簇机架推装入舱工站',
-        category: 'CLUSTER',
-        automationLevel: 'MANUAL',
-        standardTimeSec: 2700,
-        parallelLanes: 1,
-        operatorsCount: 4,
-        machinesCount: 1,
-        availabilityRate: 96,
-        performanceRate: 90,
-        qualityRate: 98,
-        reworkRate: 2,
-        avgReworkTimeSec: 600,
-        footprintSqM: 120,
-        equipmentCostTenThousand: 120
-      },
-      {
-        id: 'st34-04',
-        code: 'ST-04',
-        name: '汇流柜与二次线束高压连接工站',
-        category: 'ELECTRICAL',
-        automationLevel: 'MANUAL',
-        standardTimeSec: 2400,
-        parallelLanes: 1,
-        operatorsCount: 4,
-        machinesCount: 1,
-        availabilityRate: 99,
-        performanceRate: 92,
-        qualityRate: 98,
-        reworkRate: 2,
-        avgReworkTimeSec: 400,
-        footprintSqM: 90,
-        equipmentCostTenThousand: 60
-      },
-      {
-        id: 'st34-05',
-        code: 'ST-05',
-        name: '绝缘耐压与 BMS 诊断测试工站',
-        category: 'TEST',
-        automationLevel: 'TEST_BENCH',
-        standardTimeSec: 2700,
-        parallelLanes: 1,
-        operatorsCount: 2,
-        machinesCount: 1,
-        availabilityRate: 96,
-        performanceRate: 93,
-        qualityRate: 96,
-        reworkRate: 4,
-        avgReworkTimeSec: 1200,
-        footprintSqM: 120,
-        equipmentCostTenThousand: 350
-      },
-      {
-        id: 'st34-06',
-        code: 'ST-06',
-        name: '整舱充放电测试与出厂打包工站',
-        category: 'TEST',
-        automationLevel: 'SEMI_AUTO',
-        standardTimeSec: 3600,
-        parallelLanes: 1,
-        operatorsCount: 3,
-        machinesCount: 1,
-        availabilityRate: 95,
-        performanceRate: 90,
-        qualityRate: 98,
-        reworkRate: 2,
-        avgReworkTimeSec: 1500,
-        footprintSqM: 180,
-        equipmentCostTenThousand: 500
-      }
-    ]
-  },
-  {
-    id: 'preset-6.25mwh-std',
-    name: '6.25MWh 20尺超高能量密度储能集装箱产线 (12工站)',
-    version: 'V2.5-高密版',
-    updatedAt: new Date().toISOString(),
-    description: '针对 6.25MWh 20尺超高能量密度液冷储能舱定制设计的智能产线，配置高精度簇级装配与双路充放电测试。',
-    containerSpec: BESS_CONTAINER_SPECS.L6250,
-    shiftConfig: {
-      shiftsPerDay: 2,
-      hoursPerShift: 10,
-      plannedDowntimeMinPerShift: 45,
-      operatingDaysPerYear: 300
-    },
-    targetAnnualGWh: 3.5,
-    targetTaktTimeMin: 45,
-    stations: generateGigaFactoryStations().slice(0, 12).map((s, idx) => ({
-      ...s,
-      id: `st625-${idx + 1}`,
-      code: `ST-${(idx + 1).toString().padStart(2, '0')}`
-    }))
-  },
-  {
-    id: 'preset-10mwh-giga',
-    name: '40ft 10MWh 储能集装箱 Gigafactory 智能化产线 (16工站)',
-    version: 'V3.5-旗舰版',
-    updatedAt: new Date().toISOString(),
-    description: '专为 40ft 10MWh 巨型储能集装箱设计的自动化超级工厂产线，具备 24 簇并线自动化推装与 1500V 级高压全功能联调测试能力。',
-    containerSpec: BESS_CONTAINER_SPECS.L10000,
+    description: '15GWh 年产能行业标杆产线方案。采用 5.01MWh 20尺高柜液冷舱规格，3班330天高效运营，年需产出 3,000 台储能集装箱。全线目标节拍 18.0 分钟/台，配有高效率柔性工站与多通道充放电并线检测。',
+    containerSpec: BESS_CONTAINER_SPECS.L5000,
     shiftConfig: {
       shiftsPerDay: 3,
       hoursPerShift: 8,
-      plannedDowntimeMinPerShift: 30,
+      plannedDowntimeMinPerShift: 20,
       operatingDaysPerYear: 330
     },
-    targetAnnualGWh: 8.0,
-    targetTaktTimeMin: 30,
-    stations: generateGigaFactoryStations().slice(0, 16).map((s, idx) => ({
-      ...s,
-      id: `st10m-${idx + 1}`,
-      code: `ST-${(idx + 1).toString().padStart(2, '0')}`
-    }))
+    targetAnnualGWh: 15.0,
+    targetTaktTimeMin: 18.0,
+    stations: generateGigaFactoryStations().map((s, idx) => {
+      const baseMin = s.standardTimeSec / 60;
+      const neededLanes = Math.max(1, Math.ceil(baseMin / 18.0));
+      return {
+        ...s,
+        id: `st15g-${idx + 1}`,
+        code: `ST-${(idx + 1).toString().padStart(2, '0')}`,
+        parallelLanes: neededLanes,
+        machinesCount: neededLanes
+      };
+    })
+  },
+
+  // 4. 20GWh Super-Gigafactory Line
+  {
+    id: 'preset-20gwh-super-giga',
+    name: '20GWh 储能超级工厂 (Super-Gigafactory) 极速智能化产线 (20GWh 超级工厂)',
+    version: 'V5.0-20GWh旗舰',
+    updatedAt: new Date().toISOString(),
+    description: '20GWh 年产能大型储能超级工厂旗舰配置。采用 5.01MWh 20尺高柜液冷舱规格，配置 24 全流程智能化工站与高并发平行矩阵测试，具备全自动 AGV 物流与高压连线，支持年产 4,000 台储能集装箱。全线目标节拍 13.5 分钟/台。',
+    containerSpec: BESS_CONTAINER_SPECS.L5000,
+    shiftConfig: {
+      shiftsPerDay: 3,
+      hoursPerShift: 8,
+      plannedDowntimeMinPerShift: 20,
+      operatingDaysPerYear: 330
+    },
+    targetAnnualGWh: 20.0,
+    targetTaktTimeMin: 13.5,
+    stations: generateGigaFactoryStations().map((s, idx) => {
+      const baseMin = s.standardTimeSec / 60;
+      const neededLanes = Math.max(1, Math.ceil(baseMin / 13.5));
+      return {
+        ...s,
+        id: `st20g-${idx + 1}`,
+        code: `ST-${(idx + 1).toString().padStart(2, '0')}`,
+        parallelLanes: neededLanes,
+        machinesCount: neededLanes
+      };
+    })
   }
 ];
 

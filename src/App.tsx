@@ -4,7 +4,7 @@ import { OverviewKpiCards } from './components/OverviewKpiCards';
 import { BottleneckChart } from './components/BottleneckChart';
 import { StationHeatmap } from './components/StationHeatmap';
 import { LineModelingView } from './components/LineModelingView';
-import { EquipmentLegoLayout } from './components/EquipmentLegoLayout';
+import { GwhCapacityCalculator } from './components/GwhCapacityCalculator';
 import { WhatIfSimulator } from './components/WhatIfSimulator';
 import { MultiVersionCompare } from './components/MultiVersionCompare';
 import { SimulationReportModal } from './components/SimulationReportModal';
@@ -50,7 +50,7 @@ export default function App() {
   };
 
   // UI Tab & Modal Navigation
-  const [activeTab, setActiveTab] = useState<'overview' | 'modeling' | 'layout' | 'whatif' | 'compare'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'gwhCalc' | 'modeling' | 'whatif' | 'compare'>('overview');
   const [isWhatIfActive, setIsWhatIfActive] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
@@ -270,7 +270,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-24 md:py-6 space-y-6">
         
         {/* KPI Cards Banner */}
         <OverviewKpiCards
@@ -279,6 +279,7 @@ export default function App() {
           isWhatIfActive={isWhatIfActive}
           baselineResult={baselineResult}
           lang={lang}
+          onNavigateToGwhCalc={() => setActiveTab('gwhCalc')}
         />
 
         {/* Tab 1: Overview & Heatmap */}
@@ -302,23 +303,23 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 2: Station Line Modeling */}
+        {/* Tab 2: Dedicated GWh Capacity Calculator */}
+        {activeTab === 'gwhCalc' && (
+          <GwhCapacityCalculator
+            model={activeModel}
+            result={baselineResult}
+            onUpdateModel={handleUpdateModel}
+            lang={lang}
+          />
+        )}
+
+        {/* Tab 3: Station Line Modeling */}
         {activeTab === 'modeling' && (
           <LineModelingView
             model={activeModel}
             onUpdateModel={handleUpdateModel}
             onResetToDefault={handleResetToDefault}
-            lang={lang}
-          />
-        )}
-
-        {/* Tab 3: Equipment Lego Layout Module */}
-        {activeTab === 'layout' && (
-          <EquipmentLegoLayout
-            model={activeModel}
-            result={baselineResult}
-            onUpdateModel={handleUpdateModel}
-            theme={theme}
+            onNavigateToGwhCalc={() => setActiveTab('gwhCalc')}
             lang={lang}
           />
         )}
@@ -358,13 +359,13 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/40 py-4 text-center text-xs text-slate-500 transition-colors">
+      <footer className="border-t border-slate-200 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/40 py-4 mb-14 md:mb-0 text-center text-xs text-slate-500 transition-colors">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="font-medium">
             IVES BESS-Planner Pro · Battery Storage Container Assembly Planning & Offline PWA System
           </div>
           <div className="text-[11px] text-slate-400 font-mono">
-            IndexedDB Storage · Takt Time Modeling · Dynamic Equipment Layout
+            IndexedDB Storage · Takt Time Modeling · GWh Capacity Planning
           </div>
         </div>
       </footer>

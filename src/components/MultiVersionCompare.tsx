@@ -60,49 +60,49 @@ export const MultiVersionCompare: React.FC<MultiVersionCompareProps> = ({
     <div className="space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 dark:border-slate-800/80 shadow-xs">
+      <div className="apple-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-2">
-            <Layers className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <span>多版本产线规划方案对比矩阵 ({snapshots.length} 个版本)</span>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center space-x-2 tracking-tight">
+            <Layers className="w-5 h-5 text-[#007AFF]" />
+            <span>{lang === 'en' ? 'Version Comparison Matrix' : '多版本产线规划方案对比矩阵'} ({snapshots.length} {lang === 'en' ? 'versions' : '个版本'})</span>
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            直观对比不同工艺配置、班次制度与自动化水平下的产线产能、平衡率与投资回报率
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            {lang === 'en' ? 'Side-by-side comparison of capacity, balance rate, cycle time and investment metrics' : '直观对比不同工艺配置、班次制度与自动化水平下的产线产能、平衡率与投资回报率'}
           </p>
         </div>
 
         <button
           onClick={onExportCompareCsv}
-          className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition"
+          className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-medium rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-slate-800 dark:text-slate-200 transition-all active:scale-95"
         >
-          <Download className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-          <span>导出对比矩阵 CSV</span>
+          <Download className="w-4 h-4 text-[#007AFF]" />
+          <span>{lang === 'en' ? 'Export CSV Matrix' : '导出对比矩阵 CSV'}</span>
         </button>
       </div>
 
       {/* Comparison Chart */}
-      <div className="bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 dark:border-slate-800/80 shadow-xs space-y-3">
-        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-300">各方案年产能 (GWh) 与 Takt 节拍 (min) 对比图表</h4>
+      <div className="apple-card p-6 space-y-3">
+        <h4 className="text-xs font-semibold text-slate-900 dark:text-white">{lang === 'en' ? 'Annual Capacity (GWh) & Takt Time (min) Comparison' : '各方案年产能 (GWh) 与 Takt 节拍 (min) 对比图表'}</h4>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-800" vertical={false} />
-              <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-              <YAxis yAxisId="left" stroke="#0d9488" fontSize={11} unit=" GWh" />
-              <YAxis yAxisId="right" orientation="right" stroke="#f43f5e" fontSize={11} unit=" min" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5ea" className="dark:stroke-[#2c2c2e]" vertical={false} />
+              <XAxis dataKey="name" stroke="#8e8e93" fontSize={11} />
+              <YAxis yAxisId="left" stroke="#007AFF" fontSize={11} unit=" GWh" />
+              <YAxis yAxisId="right" orientation="right" stroke="#FF3B30" fontSize={11} unit=" min" />
               <Tooltip
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
+                contentStyle={{ backgroundColor: 'rgba(28,28,30,0.9)', backdropFilter: 'blur(10px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px', fontSize: '12px', color: '#fff' }}
               />
               <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-              <Bar yAxisId="left" dataKey="gwh" name="年产能 (GWh)" fill="#0d9488" radius={[6, 6, 0, 0]} />
-              <Bar yAxisId="right" dataKey="takt" name="Takt 节拍 (min)" fill="#f43f5e" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="left" dataKey="gwh" name={lang === 'en' ? 'Capacity (GWh)' : '年产能 (GWh)'} fill="#007AFF" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="right" dataKey="takt" name={lang === 'en' ? 'Takt Time (min)' : 'Takt 节拍 (min)'} fill="#FF3B30" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Side-by-Side Comparison Matrix Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-x-auto">
+      <div className="apple-card p-0 overflow-x-auto overflow-hidden">
         <table className="w-full text-left text-xs text-slate-800 dark:text-slate-200 min-w-[700px]">
           <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 text-[11px]">
             <tr>

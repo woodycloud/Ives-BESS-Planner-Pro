@@ -45,21 +45,21 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
     if (active && payload && payload.length) {
       const d = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-xl text-xs space-y-1.5 z-50 text-slate-900 dark:text-slate-100">
-          <div className="flex items-center space-x-2 font-bold">
-            <span className="font-mono text-teal-600 dark:text-teal-400">[{d.code}]</span>
+        <div className="bg-white/90 dark:bg-[#2c2c2e]/90 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.1] p-3.5 rounded-2xl shadow-lg text-xs space-y-1.5 z-50 text-slate-900 dark:text-slate-100">
+          <div className="flex items-center space-x-2 font-semibold">
+            <span className="font-mono text-[#007AFF]">[{d.code}]</span>
             <span>{d.name}</span>
             {d.isBottleneck && (
-              <span className="px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-orange-950 dark:text-orange-300 border border-amber-300 dark:border-orange-800 font-normal">
+              <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
                 ★ {t.bottleneckLegend}
               </span>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-800 font-mono text-[11px]">
-            <div>{t.cycleTimeLabel}: <b className="text-teal-600 dark:text-teal-300">{d.cycleTime} min</b></div>
-            <div>{t.utilizationLabel}: <b className={d.utilization >= 90 ? 'text-amber-600 dark:text-orange-400' : 'text-teal-600 dark:text-teal-400'}>{d.utilization}%</b></div>
-            <div>{t.oeeLabel}: <b className="text-slate-800 dark:text-slate-200">{d.oee}%</b></div>
-            <div>{t.capexLabel}: <b className="text-slate-800 dark:text-slate-200">￥{d.equipmentCost}万</b></div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-500 dark:text-slate-400 pt-1.5 border-t border-black/[0.04] dark:border-white/[0.06] text-[11px]">
+            <div>{t.cycleTimeLabel}: <b className="text-slate-900 dark:text-white font-medium">{d.cycleTime} min</b></div>
+            <div>{t.utilizationLabel}: <b className={d.utilization >= 90 ? 'text-amber-500' : 'text-slate-900 dark:text-white'}>{d.utilization}%</b></div>
+            <div>{t.oeeLabel}: <b className="text-slate-900 dark:text-white font-medium">{d.oee}%</b></div>
+            <div>{t.capexLabel}: <b className="text-slate-900 dark:text-white font-medium">￥{d.equipmentCost}万</b></div>
           </div>
         </div>
       );
@@ -68,31 +68,31 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
   };
 
   return (
-    <div className="bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 border border-white/80 dark:border-slate-800/80 shadow-xs space-y-4">
+    <div className="apple-card p-6 space-y-5">
       
-      {/* Bento Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-black/[0.04] dark:border-white/[0.06]">
         <div className="flex items-center gap-2.5">
-          <span className="w-2 h-4 bg-teal-500 rounded-full"></span>
+          <span className="w-1.5 h-4 bg-[#007AFF] rounded-full"></span>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-none">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight leading-none">
               {t.title}
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              {t.currentTakt}: <span className="font-mono text-teal-600 dark:text-teal-400 font-bold">{result.lineTaktTimeMin} min/unit</span> | {t.demandTakt}: <span className="font-mono text-indigo-600 dark:text-indigo-400 font-bold">{result.demandTaktTimeMin} min/unit</span>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-normal">
+              {t.currentTakt}: <span className="text-slate-700 dark:text-slate-300 font-medium">{result.lineTaktTimeMin} min/unit</span> | {t.demandTakt}: <span className="text-indigo-500 font-medium">{result.demandTaktTimeMin} min/unit</span>
             </p>
           </div>
         </div>
 
-        {/* Legend pills */}
+        {/* Legend Pills */}
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 bg-amber-50 dark:bg-slate-800 rounded-lg text-[10px] text-amber-700 dark:text-orange-400 font-mono border border-amber-200 dark:border-orange-800/80 font-bold">
+          <span className="px-2.5 py-1 bg-amber-500/10 rounded-full text-[10px] text-amber-600 dark:text-amber-400 font-medium">
             ★ {t.bottleneckLegend}
           </span>
-          <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] text-amber-600 dark:text-amber-400 font-mono border border-slate-200 dark:border-slate-700">
+          <span className="px-2.5 py-1 bg-black/[0.03] dark:bg-white/[0.06] rounded-full text-[10px] text-slate-600 dark:text-slate-300 font-medium">
             {t.highLoadLegend}
           </span>
-          <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] text-teal-600 dark:text-teal-400 font-mono border border-slate-200 dark:border-slate-700">
+          <span className="px-2.5 py-1 bg-blue-500/10 rounded-full text-[10px] text-[#007AFF] font-medium">
             {t.normalLegend}
           </span>
         </div>
@@ -110,20 +110,20 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
               }
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-800" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e5ea" className="dark:stroke-[#2c2c2e]" vertical={false} />
             <XAxis 
               dataKey="code" 
-              stroke="#64748b" 
+              stroke="#8e8e93" 
               fontSize={11} 
               tickLine={false}
-              axisLine={{ stroke: '#cbd5e1' }}
+              axisLine={false}
             />
             <YAxis 
-              stroke="#64748b" 
+              stroke="#8e8e93" 
               fontSize={11} 
               unit=" min"
               tickLine={false}
-              axisLine={{ stroke: '#cbd5e1' }}
+              axisLine={false}
             />
             <Tooltip content={<CustomTooltip />} />
             
@@ -131,12 +131,12 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
             {result.demandTaktTimeMin > 0 && (
               <ReferenceLine
                 y={result.demandTaktTimeMin}
-                stroke="#6366f1"
+                stroke="#5E5CE6"
                 strokeDasharray="4 4"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 label={{
                   value: `${t.demandTaktLine}: ${result.demandTaktTimeMin} min`,
-                  fill: '#6366f1',
+                  fill: '#5E5CE6',
                   fontSize: 11,
                   position: 'top'
                 }}
@@ -146,23 +146,23 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
             {/* Reference Line for Actual Line Takt Time */}
             <ReferenceLine
               y={result.lineTaktTimeMin}
-              stroke="#f97316"
-              strokeWidth={2}
+              stroke="#FF9500"
+              strokeWidth={1.5}
               label={{
                 value: `${t.bottleneckTaktLine}: ${result.lineTaktTimeMin} min`,
-                fill: '#f97316',
+                fill: '#FF9500',
                 fontSize: 11,
                 position: 'insideTopRight'
               }}
             />
 
-            <Bar dataKey="cycleTime" radius={[6, 6, 0, 0]} cursor="pointer">
+            <Bar dataKey="cycleTime" radius={[8, 8, 0, 0]} cursor="pointer">
               {data.map((entry, index) => {
-                let fill = '#0d9488'; // Teal default
+                let fill = '#007AFF'; // Apple System Blue
                 if (entry.isBottleneck) {
-                  fill = '#ea580c'; // Orange for bottleneck
+                  fill = '#FF9500'; // Apple System Orange for bottleneck
                 } else if (entry.utilization >= 85) {
-                  fill = '#d97706'; // Amber for high load
+                  fill = '#30B0C7'; // Refined Teal for high load
                 }
                 return <Cell key={`cell-${index}`} fill={fill} />;
               })}
@@ -173,14 +173,14 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
 
       {/* Bottleneck Diagnostic Banner */}
       {bottleneck && (
-        <div className="bg-amber-50 dark:bg-orange-950/20 border border-amber-200 dark:border-orange-800/80 rounded-2xl p-3.5 flex items-start space-x-3 text-xs text-slate-800 dark:text-orange-200">
-          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-orange-400 shrink-0 mt-0.5" />
+        <div className="bg-amber-500/10 rounded-2xl p-4 flex items-start space-x-3 text-xs text-slate-800 dark:text-slate-200">
+          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <div className="font-bold text-amber-900 dark:text-orange-100 flex items-center space-x-2">
+            <div className="font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
               <span>{t.primaryBottleneck}: [{bottleneck.code}] {bottleneck.name}</span>
             </div>
-            <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed font-sans">
-              {t.bottleneckCt}: <b className="font-mono text-amber-700 dark:text-orange-300">{bottleneck.effectiveCycleTimeMin} min</b> ({t.loadFactor})。
+            <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed font-normal">
+              {t.bottleneckCt}: <b className="font-medium text-slate-800 dark:text-slate-200">{bottleneck.effectiveCycleTimeMin} min</b> ({t.loadFactor})。
               {t.recommendations}
             </p>
           </div>
@@ -190,4 +190,5 @@ export const BottleneckChart: React.FC<BottleneckChartProps> = ({
     </div>
   );
 };
+
 

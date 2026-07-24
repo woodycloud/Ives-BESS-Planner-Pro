@@ -39,10 +39,10 @@ export const SimulationReportModal: React.FC<SimulationReportModalProps> = ({
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full my-auto shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Modal Top Header (Screen only) */}
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 print:hidden">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950 border-b border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between shrink-0 print:hidden">
           <div className="flex items-center space-x-2">
-            <Factory className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+            <Factory className="w-5 h-5 text-[#007AFF]" />
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
               {isEn ? 'IVES BESS-Planner Pro Simulation Diagnostic Report' : 'IVES BESS-Planner Pro 储能产线仿真诊断报告'}
             </h3>
           </div>
@@ -50,15 +50,15 @@ export const SimulationReportModal: React.FC<SimulationReportModalProps> = ({
           <div className="flex items-center space-x-2">
             <button
               onClick={onExportCsv}
-              className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition"
+              className="flex items-center space-x-1 px-3.5 py-1.5 text-xs font-medium rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-slate-800 dark:text-slate-200 transition-all active:scale-95"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
               <span>{isEn ? 'Export CSV' : '导出 CSV 表格'}</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-teal-600 hover:bg-teal-500 text-white shadow-sm transition"
+              className="flex items-center space-x-1 px-3.5 py-1.5 text-xs font-medium rounded-full bg-[#007AFF] hover:bg-[#0066CC] text-white shadow-xs transition-all active:scale-95"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>{isEn ? 'Print / PDF Report' : '打印 / 保存 PDF 报告'}</span>
@@ -66,7 +66,7 @@ export const SimulationReportModal: React.FC<SimulationReportModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
+              className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-full transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -100,9 +100,9 @@ export const SimulationReportModal: React.FC<SimulationReportModalProps> = ({
 
           {/* KPI Summary Block */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 print:bg-slate-50 print:border-slate-200">
+            <div className="p-3.5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.06] print:bg-slate-50 print:border-slate-200">
               <div className="text-[11px] text-slate-500 print:text-slate-600 font-medium">{isEn ? 'Est. Annual Output' : '预估年产能'}</div>
-              <div className="text-xl font-extrabold text-teal-600 dark:text-teal-400 print:text-teal-800 font-mono mt-1">
+              <div className="text-xl font-bold text-[#007AFF] font-mono mt-1">
                 {result.annualGWhOutput} GWh
               </div>
               <div className="text-[10px] text-slate-500 print:text-slate-600 mt-0.5">
